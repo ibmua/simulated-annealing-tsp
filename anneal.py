@@ -66,19 +66,54 @@ class SimAnneal(object):
         """
         return math.exp(-abs(candidate_fitness - self.cur_fitness) / self.T)
 
-    def accept(self, candidate):
+    
+    def diff_better(self, candidate, a,b):
+        N = self.N
+        
+        x = (a+N-1) % self.N
+        xx= (x + 1) % self.N
+        y = (b+N-1) % self.N
+        yy= (y + 1) % self.N
+        
+        q = self.dist(self.cur_solution[x],  self.cur_solution[xx])
+        w = self.dist(self.cur_solution[y],  self.cur_solution[yy])
+
+        e = self.dist(candidate[x], candidate[xx])
+        r = self.dist(candidate[y], candidate[yy])
+
+        #print(self.cur_solution)
+        #print(x,xx, y,yy)
+        #print(self.cur_solution[x],self.cur_solution[xx], self.cur_solution[y],self.cur_solution[yy])
+        #print(candidate[x],candidate[xx], candidate[y],candidate[yy])
+        
+        diff = e+r - (q+w)
+
+        #other_diff = self.fitness(candidate) - self.fitness(self.best_solution)
+        #print(diff, "vs", other_diff)
+
+        if q+w > e+r:
+            return (True,  diff)
+        return     (False, diff)
+
+    
+    def accept(self, candidate, a,b):
         """
         Accept with probability 1 if candidate is better than current.
         Accept with probabilty p_accept(..) if candidate is worse.
         """
-        candidate_fitness = self.fitness(candidate)
-        if candidate_fitness < self.cur_fitness:
-            self.cur_fitness, self.cur_solution = candidate_fitness, candidate
-            if candidate_fitness < self.best_fitness:
-                self.best_fitness, self.best_solution = candidate_fitness, candidate
+        #if candidate_length < self.cur_fitness:
+       
+        diff_good, delta = self.diff_better(candidate, a,b)
+        candidate_length = delta + self.cur_fitness
+        #candidate_length = self.fitness(candidate)
+
+        if candidate_length < self.cur_fitness:
+            self.cur_fitness, self.cur_solution = candidate_length, candidate
+            if candidate_length < self.best_fitness:
+                self.best_fitness, self.best_solution = candidate_length, candidate
         else:
-            if random.random() < self.p_accept(candidate_fitness):
-                self.cur_fitness, self.cur_solution = candidate_fitness, candidate
+            if random.random() < self.p_accept( candidate_length ):
+                self.cur_fitness, self.cur_solution = candidate_length, candidate
 
     def anneal(self):
         """
@@ -86,19 +121,23 @@ class SimAnneal(object):
         """
         # Initialize with the greedy solution.
         self.cur_solution, self.cur_fitness = self.initial_solution()
+        
+        self.iteration = 1
 
         print("Starting annealing.")
         while self.T >= self.stopping_temperature and self.iteration < self.stopping_iter:
             candidate = list(self.cur_solution)
             l = random.randint(2, self.N - 1)
             i = random.randint(0, self.N - l)
-            candidate[i : (i + l)] = reversed(candidate[i : (i + l)])
-            self.accept(candidate)
+            #print(candidate)
+            candidate[  i : (i + l)  ] = reversed(candidate[  i : (i + l)  ])
+            #print(candidate, i,l)
+            self.accept(candidate, i, i+l)
             self.T *= self.alpha
             self.iteration += 1
-
             self.fitness_list.append(self.cur_fitness)
 
+        print("T: ", self.T, "self.stopping_temperature", self.stopping_temperature)
         print("Best fitness obtained: ", self.best_fitness)
         improvement = 100 * (self.fitness_list[0] - self.best_fitness) / (self.fitness_list[0])
         print(f"Improvement over greedy heuristic: {improvement : .2f}%")
