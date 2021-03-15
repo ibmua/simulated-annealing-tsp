@@ -1,5 +1,9 @@
-Simulated Annealing algorithm to solve Travelling Salesman Problem in Python
+FASTER Simulated Annealing algorithm to solve Travelling Salesman Problem in Python
 ===================
+
+
+⚠ What's different about my version vs original is that it doesn't recalculate whole length every time and instead considers the difference.
+
 
 Using [simulated annealing](https://en.wikipedia.org/wiki/Simulated_annealing) metaheuristic to solve the [travelling salesman problem](https://en.wikipedia.org/wiki/Travelling_salesman_problem), and visualizing the results. 
 
